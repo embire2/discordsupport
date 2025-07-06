@@ -51,6 +51,7 @@ Yes, Ubuntu 22.04 LTS is an excellent choice for hosting this bot. It's fully co
 - **Network**: Stable internet connection
 - **Node.js**: Version 18.0.0 or higher
 - **npm**: Version 8.0.0 or higher (usually comes with Node.js)
+- **Python**: Version 3.11 or lower (for native module compilation)
 
 ### Ubuntu 22.04 Server Setup
 
@@ -73,12 +74,24 @@ npm --version   # Should show v8.x.x or higher
 sudo npm install -g npm@latest
 ```
 
-#### 3. Install Git (if not installed)
+#### 3. Install Build Dependencies (IMPORTANT for SQLite)
+```bash
+# Install Python 3 and build tools
+sudo apt install -y python3 python3-pip python3-setuptools python3-distutils build-essential
+
+# For Ubuntu 24.04 or Python 3.12+, install python3-setuptools
+sudo apt install -y python3-setuptools
+
+# Alternative: Install Python 3.11 if you have Python 3.12+
+sudo apt install -y python3.11 python3.11-distutils
+```
+
+#### 4. Install Git (if not installed)
 ```bash
 sudo apt install git -y
 ```
 
-#### 4. Download the Discord Ticket Bot
+#### 5. Download the Discord Ticket Bot
 ```bash
 # Clone the repository from GitHub
 git clone https://github.com/embire2/discordsupport.git
@@ -90,7 +103,7 @@ cd discordsupport
 ls -la
 ```
 
-#### 5. Install Process Manager (Optional but Recommended)
+#### 6. Install Process Manager (Optional but Recommended)
 ```bash
 # Install PM2 for process management
 sudo npm install -g pm2
@@ -181,6 +194,7 @@ sudo apt install screen -y
 ### Prerequisites
 - Node.js 18.0.0 or higher
 - npm 8.0.0 or higher (package manager)
+- Python 3.11 or lower (for SQLite compilation) OR python3-setuptools for Python 3.12+
 - Discord Bot Token (from steps above)
 - Discord Server with admin permissions
 
@@ -199,9 +213,30 @@ sudo apt install screen -y
    # Click "Code" → "Download ZIP" → Extract files
    ```
 
-2. **Install npm dependencies**
+2. **Fix Python Dependencies (if using Python 3.12+)**
+   ```bash
+   # For Ubuntu/Debian with Python 3.12+
+   sudo apt install -y python3-setuptools python3-pip build-essential
+   
+   # Alternative: Use Python 3.11
+   sudo apt install -y python3.11 python3.11-distutils
+   export PYTHON=/usr/bin/python3.11
+   ```
+
+3. **Install npm dependencies**
    ```bash
    # Install all required packages
+   npm install
+   
+   # If you get Python/distutils errors, try:
+   # Option 1: Force rebuild
+   npm install --build-from-source
+   
+   # Option 2: Use pre-built binaries
+   npm install --prefer-offline --no-audit
+   
+   # Option 3: Clear cache and retry
+   npm cache clean --force
    npm install
    
    # This will install:
@@ -211,7 +246,7 @@ sudo apt install screen -y
    # - And other required dependencies
    ```
 
-3. **Run the setup wizard**
+4. **Run the setup wizard**
    ```bash
    npm run setup
    ```
@@ -222,7 +257,7 @@ sudo apt install screen -y
    - Role and channel naming
    - Color customization
 
-4. **Start the bot**
+5. **Start the bot**
    ```bash
    # For development/testing
    npm start
@@ -266,36 +301,58 @@ sudo apt update && sudo apt upgrade -y
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# 3. Verify Node.js and npm installation
+# 3. Install build dependencies for SQLite
+sudo apt install -y python3 python3-pip python3-setuptools build-essential
+
+# 4. Verify installations
 node --version  # Should show v18.x.x
 npm --version   # Should show v8.x.x or higher
+python3 --version  # Should show Python version
 
-# 4. Update npm to latest version (optional but recommended)
+# 5. Update npm to latest version (optional but recommended)
 sudo npm install -g npm@latest
 
-# 5. Install Git (if needed)
+# 6. Install Git (if needed)
 sudo apt install git -y
 
-# 6. Clone the Discord Ticket Bot
+# 7. Clone the Discord Ticket Bot
 git clone https://github.com/embire2/discordsupport.git
 
-# 7. Navigate to project
+# 8. Navigate to project
 cd discordsupport
 
-# 8. Install npm dependencies
+# 9. Install npm dependencies
 npm install
 
-# 9. Run setup wizard
+# 10. Run setup wizard
 npm run setup
 
-# 10. Start the bot
+# 11. Start the bot
 npm start
 ```
 
 ### npm Installation Troubleshooting
 
-If you encounter npm installation issues:
+#### Python/distutils Error (Your Current Issue)
+```bash
+# Solution 1: Install python3-setuptools (Recommended)
+sudo apt update
+sudo apt install -y python3-setuptools python3-pip build-essential
 
+# Solution 2: Use Python 3.11 instead of 3.12
+sudo apt install -y python3.11 python3.11-distutils
+# Set Python 3.11 as default for npm
+export PYTHON=/usr/bin/python3.11
+npm install
+
+# Solution 3: Install distutils for Python 3.12 (Ubuntu 24.04)
+sudo apt install -y python3-distutils-extra
+
+# Solution 4: Use pre-built SQLite binaries
+npm install sqlite3 --build-from-source --sqlite=/usr
+```
+
+#### General npm Issues
 ```bash
 # Clear npm cache
 npm cache clean --force
@@ -318,24 +375,29 @@ For Windows users:
 
 ```cmd
 # 1. Download and install Node.js from https://nodejs.org
-# 2. Open Command Prompt or PowerShell as Administrator
-# 3. Verify installation
+# 2. Install Python 3.11 from https://python.org (NOT 3.12+)
+# 3. Open Command Prompt or PowerShell as Administrator
+# 4. Verify installation
 node --version
 npm --version
+python --version
 
-# 4. Clone the repository
+# 5. Clone the repository
 git clone https://github.com/embire2/discordsupport.git
 
-# 5. Navigate to project
+# 6. Navigate to project
 cd discordsupport
 
-# 6. Install dependencies
+# 7. Install Windows Build Tools (if needed)
+npm install --global windows-build-tools
+
+# 8. Install dependencies
 npm install
 
-# 7. Run setup
+# 9. Run setup
 npm run setup
 
-# 8. Start the bot
+# 10. Start the bot
 npm start
 ```
 
@@ -497,6 +559,29 @@ Database file is stored in `data/tickets.db`
 - Check channel-specific permissions
 
 ### npm Installation Issues
+
+#### Python 3.12+ distutils Error
+This is the most common issue on newer systems. Python 3.12 removed distutils module.
+
+**Solutions:**
+```bash
+# Best solution: Install setuptools
+sudo apt install -y python3-setuptools python3-pip
+
+# Alternative 1: Use Python 3.11
+sudo apt install -y python3.11 python3.11-distutils
+export PYTHON=/usr/bin/python3.11
+npm install
+
+# Alternative 2: Install from source with system SQLite
+npm install sqlite3 --build-from-source --sqlite=/usr
+
+# Alternative 3: Use different SQLite package
+npm uninstall sqlite3 better-sqlite3
+npm install @vscode/sqlite3
+```
+
+#### Other npm Issues
 ```bash
 # Clear npm cache and reinstall
 npm cache clean --force
