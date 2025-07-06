@@ -50,6 +50,7 @@ Yes, Ubuntu 22.04 LTS is an excellent choice for hosting this bot. It's fully co
 - **Storage**: 1GB free space (for logs and database)
 - **Network**: Stable internet connection
 - **Node.js**: Version 18.0.0 or higher
+- **npm**: Version 8.0.0 or higher (usually comes with Node.js)
 
 ### Ubuntu 22.04 Server Setup
 
@@ -58,15 +59,18 @@ Yes, Ubuntu 22.04 LTS is an excellent choice for hosting this bot. It's fully co
 sudo apt update && sudo apt upgrade -y
 ```
 
-#### 2. Install Node.js 18+
+#### 2. Install Node.js 18+ and npm
 ```bash
-# Install Node.js 18.x LTS
+# Install Node.js 18.x LTS (includes npm)
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # Verify installation
 node --version  # Should show v18.x.x or higher
-npm --version
+npm --version   # Should show v8.x.x or higher
+
+# If npm is not installed or outdated, install/update it
+sudo npm install -g npm@latest
 ```
 
 #### 3. Install Git (if not installed)
@@ -176,6 +180,7 @@ sudo apt install screen -y
 
 ### Prerequisites
 - Node.js 18.0.0 or higher
+- npm 8.0.0 or higher (package manager)
 - Discord Bot Token (from steps above)
 - Discord Server with admin permissions
 
@@ -194,9 +199,16 @@ sudo apt install screen -y
    # Click "Code" → "Download ZIP" → Extract files
    ```
 
-2. **Install dependencies**
+2. **Install npm dependencies**
    ```bash
+   # Install all required packages
    npm install
+   
+   # This will install:
+   # - discord.js (Discord API library)
+   # - sqlite3 (Database)
+   # - dotenv (Environment variables)
+   # - And other required dependencies
    ```
 
 3. **Run the setup wizard**
@@ -250,14 +262,68 @@ Here's a complete step-by-step installation on Ubuntu 22.04:
 # 1. Update system
 sudo apt update && sudo apt upgrade -y
 
-# 2. Install Node.js 18.x
+# 2. Install Node.js 18.x and npm
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# 3. Install Git (if needed)
+# 3. Verify Node.js and npm installation
+node --version  # Should show v18.x.x
+npm --version   # Should show v8.x.x or higher
+
+# 4. Update npm to latest version (optional but recommended)
+sudo npm install -g npm@latest
+
+# 5. Install Git (if needed)
 sudo apt install git -y
 
-# 4. Clone the Discord Ticket Bot
+# 6. Clone the Discord Ticket Bot
+git clone https://github.com/embire2/discordsupport.git
+
+# 7. Navigate to project
+cd discordsupport
+
+# 8. Install npm dependencies
+npm install
+
+# 9. Run setup wizard
+npm run setup
+
+# 10. Start the bot
+npm start
+```
+
+### npm Installation Troubleshooting
+
+If you encounter npm installation issues:
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# If permission errors occur (Linux/macOS)
+sudo chown -R $(whoami) ~/.npm
+sudo chown -R $(whoami) /usr/local/lib/node_modules
+
+# Alternative: Use npx for one-time installations
+npx create-discord-bot@latest
+```
+
+### Windows Installation
+
+For Windows users:
+
+```cmd
+# 1. Download and install Node.js from https://nodejs.org
+# 2. Open Command Prompt or PowerShell as Administrator
+# 3. Verify installation
+node --version
+npm --version
+
+# 4. Clone the repository
 git clone https://github.com/embire2/discordsupport.git
 
 # 5. Navigate to project
@@ -266,7 +332,7 @@ cd discordsupport
 # 6. Install dependencies
 npm install
 
-# 7. Run setup wizard
+# 7. Run setup
 npm run setup
 
 # 8. Start the bot
@@ -279,6 +345,9 @@ npm start
 ```bash
 # Navigate to bot directory
 cd discordsupport
+
+# Ensure all dependencies are installed
+npm install --production
 
 # Start bot with PM2
 pm2 start src/index.js --name "ticket-bot"
@@ -427,6 +496,21 @@ Database file is stored in `data/tickets.db`
 - Bot role must be higher than roles it needs to manage
 - Check channel-specific permissions
 
+### npm Installation Issues
+```bash
+# Clear npm cache and reinstall
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+
+# Check npm configuration
+npm config list
+npm config get registry
+
+# Fix permission issues (Linux/macOS)
+sudo chown -R $(whoami) ~/.npm
+```
+
 ### Connection Issues (Ubuntu Server)
 ```bash
 # Check if bot is running
@@ -445,6 +529,7 @@ ping discord.com
 # Check if repository is up to date
 cd discordsupport
 git pull origin main
+npm install  # Install any new dependencies
 ```
 
 ## Security Considerations 🔒
@@ -467,6 +552,11 @@ sudo ufw allow 443
 # Auto-updates
 sudo apt install unattended-upgrades
 sudo dpkg-reconfigure unattended-upgrades
+
+# Keep npm packages updated
+npm audit
+npm audit fix
+npm update
 ```
 
 ## Development 💻
@@ -482,8 +572,10 @@ discordsupport/
 │   ├── index.js         # Main bot file
 │   └── setup.js         # Setup wizard
 ├── data/                # Database storage
+├── node_modules/        # npm dependencies (auto-generated)
 ├── .env                 # Configuration
-├── package.json         # Dependencies
+├── package.json         # npm dependencies and scripts
+├── package-lock.json    # npm dependency lock file
 └── README.md           # Documentation
 ```
 
@@ -491,6 +583,7 @@ discordsupport/
 1. Commands go in `src/commands/[category]/`
 2. Buttons go in `src/interactions/buttons/`
 3. Follow the existing pattern for consistency
+4. Install new dependencies with `npm install package-name`
 
 ### Updating the Bot
 ```bash
@@ -517,7 +610,8 @@ If you encounter issues:
 3. Review the bot logs for errors
 4. Verify your configuration in `.env`
 5. Check Discord Developer Portal for any issues
-6. Visit the GitHub repository: https://github.com/embire2/discordsupport
+6. Ensure npm dependencies are properly installed
+7. Visit the GitHub repository: https://github.com/embire2/discordsupport
 
 ## License 📄
 
