@@ -74,10 +74,16 @@ npm --version
 sudo apt install git -y
 ```
 
-#### 4. Create Bot Directory
+#### 4. Download the Discord Ticket Bot
 ```bash
-mkdir ~/discord-ticket-bot
-cd ~/discord-ticket-bot
+# Clone the repository from GitHub
+git clone https://github.com/embire2/discordsupport.git
+
+# Navigate to the bot directory
+cd discordsupport
+
+# Verify files downloaded
+ls -la
 ```
 
 #### 5. Install Process Manager (Optional but Recommended)
@@ -175,13 +181,17 @@ sudo apt install screen -y
 
 ### Quick Setup
 
-1. **Download/Clone the bot files**
+1. **Download the bot from GitHub**
    ```bash
-   # If using git
-   git clone <repository-url>
-   cd discord-ticket-bot
+   # Clone the repository
+   git clone https://github.com/embire2/discordsupport.git
    
-   # Or extract downloaded files
+   # Navigate to the project directory
+   cd discordsupport
+   
+   # Alternative: Download as ZIP
+   # Visit: https://github.com/embire2/discordsupport
+   # Click "Code" → "Download ZIP" → Extract files
    ```
 
 2. **Install dependencies**
@@ -232,10 +242,44 @@ sudo apt install screen -y
 
 3. Customize other settings as needed
 
+### Complete Installation Example (Ubuntu 22.04)
+
+Here's a complete step-by-step installation on Ubuntu 22.04:
+
+```bash
+# 1. Update system
+sudo apt update && sudo apt upgrade -y
+
+# 2. Install Node.js 18.x
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# 3. Install Git (if needed)
+sudo apt install git -y
+
+# 4. Clone the Discord Ticket Bot
+git clone https://github.com/embire2/discordsupport.git
+
+# 5. Navigate to project
+cd discordsupport
+
+# 6. Install dependencies
+npm install
+
+# 7. Run setup wizard
+npm run setup
+
+# 8. Start the bot
+npm start
+```
+
 ## Production Deployment (Ubuntu 22.04) 🚀
 
 ### Using PM2 (Recommended)
 ```bash
+# Navigate to bot directory
+cd discordsupport
+
 # Start bot with PM2
 pm2 start src/index.js --name "ticket-bot"
 
@@ -258,7 +302,7 @@ pm2 restart ticket-bot
 sudo nano /etc/systemd/system/ticket-bot.service
 ```
 
-Add this content:
+Add this content (replace `your-username` with your actual username):
 ```ini
 [Unit]
 Description=Discord Ticket Bot
@@ -267,7 +311,7 @@ After=network.target
 [Service]
 Type=simple
 User=your-username
-WorkingDirectory=/home/your-username/discord-ticket-bot
+WorkingDirectory=/home/your-username/discordsupport
 ExecStart=/usr/bin/node src/index.js
 Restart=always
 RestartSec=10
@@ -397,6 +441,10 @@ sudo journalctl -u ticket-bot -f
 
 # Check network connectivity
 ping discord.com
+
+# Check if repository is up to date
+cd discordsupport
+git pull origin main
 ```
 
 ## Security Considerations 🔒
@@ -425,7 +473,7 @@ sudo dpkg-reconfigure unattended-upgrades
 
 ### Project Structure
 ```
-discord-ticket-bot/
+discordsupport/
 ├── src/
 │   ├── commands/        # Slash commands
 │   ├── interactions/    # Buttons, menus, modals
@@ -444,6 +492,23 @@ discord-ticket-bot/
 2. Buttons go in `src/interactions/buttons/`
 3. Follow the existing pattern for consistency
 
+### Updating the Bot
+```bash
+# Navigate to bot directory
+cd discordsupport
+
+# Pull latest changes
+git pull origin main
+
+# Install any new dependencies
+npm install
+
+# Restart the bot
+pm2 restart ticket-bot
+# or
+sudo systemctl restart ticket-bot
+```
+
 ## Support 💬
 
 If you encounter issues:
@@ -452,6 +517,7 @@ If you encounter issues:
 3. Review the bot logs for errors
 4. Verify your configuration in `.env`
 5. Check Discord Developer Portal for any issues
+6. Visit the GitHub repository: https://github.com/embire2/discordsupport
 
 ## License 📄
 
