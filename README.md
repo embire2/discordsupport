@@ -331,76 +331,6 @@ npm run setup
 npm start
 ```
 
-### npm Installation Troubleshooting
-
-#### Python/distutils Error (Your Current Issue)
-```bash
-# Solution 1: Install python3-setuptools (Recommended)
-sudo apt update
-sudo apt install -y python3-setuptools python3-pip build-essential
-
-# Solution 2: Use Python 3.11 instead of 3.12
-sudo apt install -y python3.11 python3.11-distutils
-# Set Python 3.11 as default for npm
-export PYTHON=/usr/bin/python3.11
-npm install
-
-# Solution 3: Install distutils for Python 3.12 (Ubuntu 24.04)
-sudo apt install -y python3-distutils-extra
-
-# Solution 4: Use pre-built SQLite binaries
-npm install sqlite3 --build-from-source --sqlite=/usr
-```
-
-#### General npm Issues
-```bash
-# Clear npm cache
-npm cache clean --force
-
-# Delete node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-
-# If permission errors occur (Linux/macOS)
-sudo chown -R $(whoami) ~/.npm
-sudo chown -R $(whoami) /usr/local/lib/node_modules
-
-# Alternative: Use npx for one-time installations
-npx create-discord-bot@latest
-```
-
-### Windows Installation
-
-For Windows users:
-
-```cmd
-# 1. Download and install Node.js from https://nodejs.org
-# 2. Install Python 3.11 from https://python.org (NOT 3.12+)
-# 3. Open Command Prompt or PowerShell as Administrator
-# 4. Verify installation
-node --version
-npm --version
-python --version
-
-# 5. Clone the repository
-git clone https://github.com/embire2/discordsupport.git
-
-# 6. Navigate to project
-cd discordsupport
-
-# 7. Install Windows Build Tools (if needed)
-npm install --global windows-build-tools
-
-# 8. Install dependencies
-npm install
-
-# 9. Run setup
-npm run setup
-
-# 10. Start the bot
-npm start
-```
-
 ## Production Deployment (Ubuntu 22.04) 🚀
 
 ### Using PM2 (Recommended)
@@ -541,81 +471,301 @@ Database file is stored in `data/tickets.db`
 
 ## Troubleshooting 🔧
 
-### Bot not responding to commands
-- Ensure the bot has proper permissions
-- Check if slash commands are registered (may take up to 1 hour)
-- Verify bot token is correct
-- Ensure bot is online in your server
+### Node.js Module Version Mismatch
 
-### Cannot create tickets
-- Run `/setup` first to configure the system
-- Check if ticket category exists
-- Ensure bot can create channels in the category
-- Verify bot role is higher than support roles
+**Error Message:**
+```
+The module '...better_sqlite3.node' was compiled against a different Node.js version using
+NODE_MODULE_VERSION 108. This version of Node.js requires NODE_MODULE_VERSION 109.
+```
 
-### Missing permissions errors
-- Bot needs "Administrator" or specific permissions listed above
-- Bot role must be higher than roles it needs to manage
-- Check channel-specific permissions
+**What This Means:**
+- Native modules (like SQLite) are compiled for specific Node.js versions
+- NODE_MODULE_VERSION 108 = Node.js 17.x
+- NODE_MODULE_VERSION 109 = Node.js 18.x
+- NODE_MODULE_VERSION 115 = Node.js 20.x
 
-### npm Installation Issues
+**Step-by-Step Solutions:**
 
-#### Python 3.12+ distutils Error
-This is the most common issue on newer systems. Python 3.12 removed distutils module.
-
-**Solutions:**
+#### Solution 1: Rebuild Native Modules
 ```bash
-# Best solution: Install setuptools
+# Navigate to project directory
+cd discordsupport
+
+# Rebuild all native modules for your current Node.js version
+npm rebuild
+
+# If specific module fails, rebuild it individually
+npm rebuild sqlite3
+```
+
+#### Solution 2: Clean Reinstall
+```bash
+# Remove node_modules and package-lock
+rm -rf node_modules package-lock.json
+
+# Clear npm cache
+npm cache clean --force
+
+# Reinstall all dependencies
+npm install
+```
+
+#### Solution 3: Switch to Compatible SQLite Package
+```bash
+# If using better-sqlite3 and it's causing issues
+npm uninstall better-sqlite3
+npm install sqlite3@^5.1.6
+
+# The bot now uses standard sqlite3 which has better compatibility
+```
+
+#### Solution 4: Check Node.js Version
+```bash
+# Check your current Node.js version
+node --version
+
+# If you need to switch Node.js versions, use nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 18
+nvm use 18
+```
+
+### Bot Not Responding to Commands
+
+**Common Causes & Solutions:**
+
+1. **Slash Commands Not Registered**
+   ```bash
+   # Commands can take up to 1 hour to register globally
+   # Force refresh by restarting bot
+   pm2 restart ticket-bot
+   ```
+
+2. **Missing Permissions**
+   - Ensure bot has all required permissions
+   - Check bot role is higher than managed roles
+   - Verify channel-specific permissions
+
+3. **Invalid Token**
+   ```bash
+   # Check your .env file
+   cat .env | grep DISCORD_TOKEN
+   
+   # Token should look like: MTE3NTQ2ODM2NzE5MjE0MTg2NA.GH5kPz.xxx...
+   # If invalid, get new token from Discord Developer Portal
+   ```
+
+4. **Bot Offline**
+   ```bash
+   # Check if bot is running
+   pm2 status
+   # or
+   ps aux | grep node
+   
+   # Check logs for errors
+   pm2 logs ticket-bot --lines 50
+   ```
+
+### Cannot Create Tickets
+
+**Troubleshooting Steps:**
+
+1. **Run Setup Command**
+   ```
+   /setup
+   ```
+   Must be run by server admin first
+
+2. **Check Category Exists**
+   - Verify ticket category wasn't deleted
+   - Check bot can see the category
+   - Ensure bot has "Manage Channels" in category
+
+3. **Permission Issues**
+   ```bash
+   # In Discord:
+   # Server Settings → Roles → [Bot Role]
+   # Ensure these are enabled:
+   # - Manage Channels ✅
+   # - Manage Roles ✅
+   # - Send Messages ✅
+   ```
+
+4. **Database Issues**
+   ```bash
+   # Check if database exists
+   ls -la data/tickets.db
+   
+   # If missing, delete and recreate
+   rm -f data/tickets.db
+   npm start
+   ```
+
+### Python/distutils Error During Installation
+
+**Error:** `ModuleNotFoundError: No module named 'distutils'`
+
+**Solutions by Python Version:**
+
+#### Python 3.12+ (Most Common)
+```bash
+# Install setuptools (includes distutils)
 sudo apt install -y python3-setuptools python3-pip
 
-# Alternative 1: Use Python 3.11
+# If that doesn't work, install distutils-extra
+sudo apt install -y python3-distutils-extra
+```
+
+#### Using Python 3.11 Instead
+```bash
+# Install Python 3.11
 sudo apt install -y python3.11 python3.11-distutils
+
+# Set Python 3.11 for npm
 export PYTHON=/usr/bin/python3.11
 npm install
-
-# Alternative 2: Install from source with system SQLite
-npm install sqlite3 --build-from-source --sqlite=/usr
-
-# Alternative 3: Use different SQLite package
-npm uninstall sqlite3 better-sqlite3
-npm install @vscode/sqlite3
 ```
 
-#### Other npm Issues
+#### Force Specific Python Version
 ```bash
-# Clear npm cache and reinstall
-npm cache clean --force
-rm -rf node_modules package-lock.json
+# Check available Python versions
+ls /usr/bin/python*
+
+# Configure npm to use specific Python
+npm config set python /usr/bin/python3.11
 npm install
-
-# Check npm configuration
-npm config list
-npm config get registry
-
-# Fix permission issues (Linux/macOS)
-sudo chown -R $(whoami) ~/.npm
 ```
 
-### Connection Issues (Ubuntu Server)
+### Database Connection Issues
+
+**SQLite Locking Error:**
 ```bash
-# Check if bot is running
-pm2 status
-# or
-sudo systemctl status ticket-bot
+# Stop all bot instances
+pm2 stop all
+pkill -f "node.*ticket"
 
-# Check logs
-pm2 logs ticket-bot
-# or
-sudo journalctl -u ticket-bot -f
+# Check for locked database
+lsof | grep tickets.db
 
-# Check network connectivity
+# Remove lock file if exists
+rm -f data/tickets.db-journal
+rm -f data/tickets.db-wal
+rm -f data/tickets.db-shm
+
+# Restart bot
+pm2 start ticket-bot
+```
+
+**Corrupted Database:**
+```bash
+# Backup current database
+cp data/tickets.db data/tickets.db.backup
+
+# Check database integrity
+sqlite3 data/tickets.db "PRAGMA integrity_check;"
+
+# If corrupted, restore from backup or delete
+rm data/tickets.db
+npm start  # Will create new database
+```
+
+### Memory Issues
+
+**High Memory Usage:**
+```bash
+# Check memory usage
+pm2 monit
+
+# Restart bot to clear memory
+pm2 restart ticket-bot
+
+# Set memory limit
+pm2 delete ticket-bot
+pm2 start src/index.js --name "ticket-bot" --max-memory-restart 500M
+```
+
+### Network/Connection Issues
+
+**Bot Can't Connect to Discord:**
+```bash
+# Check internet connection
 ping discord.com
 
-# Check if repository is up to date
-cd discordsupport
-git pull origin main
-npm install  # Install any new dependencies
+# Check DNS resolution
+nslookup discord.com
+
+# Check firewall
+sudo ufw status
+
+# If firewall blocking, allow outbound
+sudo ufw allow out 443/tcp
+sudo ufw allow out 80/tcp
 ```
+
+### Permission Denied Errors
+
+**npm Permission Issues:**
+```bash
+# Fix npm permissions
+sudo chown -R $(whoami) ~/.npm
+sudo chown -R $(whoami) /usr/local/lib/node_modules
+
+# Alternative: Use npm without sudo
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**File Permission Issues:**
+```bash
+# Fix project permissions
+sudo chown -R $(whoami):$(whoami) ~/discordsupport
+chmod -R 755 ~/discordsupport
+```
+
+### Common Error Messages & Solutions
+
+| Error | Solution |
+|-------|----------|
+| `Cannot find module 'discord.js'` | Run `npm install` |
+| `EACCES: permission denied` | Fix permissions with `sudo chown -R $(whoami) .` |
+| `Error: SQLITE_CANTOPEN` | Create data directory: `mkdir -p data` |
+| `Invalid token` | Check token in .env file |
+| `Missing Access` | Bot lacks permissions in Discord |
+| `Unknown interaction` | Commands not registered, wait or restart |
+| `Request entity too large` | Transcript too big, will be truncated |
+
+### Getting Help
+
+If issues persist after trying these solutions:
+
+1. **Check Logs Thoroughly**
+   ```bash
+   # PM2 logs
+   pm2 logs ticket-bot --lines 100
+   
+   # System logs
+   sudo journalctl -u ticket-bot -n 100
+   ```
+
+2. **Verify All Requirements**
+   - Node.js 18+ installed
+   - All npm packages installed
+   - Valid bot token
+   - Bot invited with correct permissions
+   - Database file exists and is writable
+
+3. **Debug Mode**
+   ```bash
+   # Run bot directly to see all output
+   node src/index.js
+   ```
+
+4. **Check GitHub Issues**
+   Visit: https://github.com/embire2/discordsupport/issues
 
 ## Security Considerations 🔒
 
@@ -690,9 +840,9 @@ sudo systemctl restart ticket-bot
 ## Support 💬
 
 If you encounter issues:
-1. Check the troubleshooting section
+1. Check the troubleshooting section above
 2. Ensure all permissions are set correctly
-3. Review the bot logs for errors
+3. Review the bot logs for detailed error messages
 4. Verify your configuration in `.env`
 5. Check Discord Developer Portal for any issues
 6. Ensure npm dependencies are properly installed
